@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+  db:
+    image: monitoringartist/zabbix-db-mariadb
+    container_name: zabbix-db
+    environment:
+      - MARIADB_USER=zabbix
+      - MARIADB_PASS=zabbix
+
+  web:
+    image: monitoringartist/zabbix-xxl:latest
+    container_name: zabbix
+    ports:
+      - 10080:80
+      - 10051:10051
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - db
+      - grafana-data
+      - grafana
+    environment:
+      - ZS_DBHost=db
+      - ZS_DBUser=zabbix
+      - ZS_DBPassword=zabbix
+      - XXL_zapix=true
+      - XXL_grapher=true
+    links:
+      - db
+      - grafana-data
+      - grafana
+
+  grafana-data:
+    image: busybox:latest
+    container_name: grafana-xxl-storage
+    volumes:
+      - /var/lib/grafana
+
+  grafana:
+    image: monitoringartist/grafana-xxl:latest
+    container_name: grafana-xxl
+    ports:
+      - 3000:3000
+    volumes_from:
+      - grafana-data
